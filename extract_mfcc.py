@@ -48,3 +48,55 @@ metadata_df = pd.DataFrame(metadata)
 # Check if DataFrame is empty
 if metadata_df.empty:
     print("Metadata DataFrame is empty")
+
+import librosa
+import numpy as np
+import pandas as pd
+import os
+
+# Function to extract MFCC features
+def extract_features(file_path):
+    try:
+        # Load the audio file
+        y, sr = librosa.load(file_path, sr=None)
+        # Extract 30 MFCC coefficients
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=30)
+        # Calculate mean and standard deviation of MFCC coefficients
+        mfcc_mean = np.mean(mfcc, axis=1)
+        mfcc_std = np.std(mfcc, axis=1)
+        # Concatenate mean and std deviation into a single feature vector
+        return np.concatenate([mfcc_mean, mfcc_std])
+    except Exception as e:
+        print(f"Error extracting features from {file_path}: {e}")
+        return None
+
+# Directory containing all segmented audio files
+segmented_audio_dir = 'segmented_audio'
+
+# Extract features from all audio files and organize into a DataFrame
+metadata = {'filename': [], 'features': [], 'genre': []}
+
+for root, _, files in os.walk(segmented_audio_dir):
+    for file in files:
+        if file.endswith('.wav'):
+            file_path = os.path.join(root, file)
+            genre = os.path.basename(root)  # Use directory name as genre label
+            features = extract_features(file_path)
+            if features is not None:
+                metadata['filename'].append(file)
+                metadata['features'].append(features)
+                metadata['genre'].append(genre)
+            else:
+                print(f"Failed to extract features for {file_path}")
+
+# Convert metadata to DataFrame
+metadata_df = pd.DataFrame(metadata)
+
+# Check if DataFrame is empty
+if metadata_df.empty:
+    print("Metadata DataFrame is empty")
+else:
+    print("Metadata DataFrame is successfully created")
+
+# Optionally, save the DataFrame to a CSV file for inspection
+metadata_df.to_csv('metadata_features.csv', index=False)

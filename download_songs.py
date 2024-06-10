@@ -15,10 +15,10 @@ def search_korean_songs_by_genre(genres, max_results=10):
     all_results = []
     for genre in genres:
         request = youtube.search().list(
-            q=f'Korean {genre} songs',
+            q=f'Korean {genre} playlist',
             part='snippet',
             type='video',
-            videoCategoryId='10',  # Category 10 is for music
+            videoCategoryId='10',  # Numbers of music to download
             maxResults=max_results
         )
         response = request.execute()
@@ -64,8 +64,11 @@ def download_video_from_youtube(video_id, title, genre, output_dir='audio_files'
             'preferredquality': '192',
         }]
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
+    except yt_dlp.utils.ExtractorError as e:
+        print(f"Skipping {title} due to an error: {e}")
 
 # Function to segment audio into individual songs based on silence detection
 def segment_audio(file_path, output_dir='segmented_audio'):
